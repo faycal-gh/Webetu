@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: progress-api
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+  tomcat:
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
+  max-http-request-header-size: 8KB
+
+# JWT Configuration
+# WARNING: The default secret is for DEVELOPMENT ONLY
+# In production, set the JWT_SECRET environment variable with a secure 256-bit key
+# Generate one with: openssl rand -base64 32
+jwt:
+  secret: ${JWT_SECRET:CHANGE_ME_IN_PRODUCTION_TO_A_SECURE_RANDOM_BASE64_STRING}
+  expiration: 900000 # 15 minutes in milliseconds
+  refresh-expiration: 604800000 # 7 days in milliseconds
+
+# External API Configuration
+external-api:
+  base-url: https://progres.mesrs.dz/api
+  timeout: 10000
+
+# Rate Limiting
+rate-limit:
+  requests: 100
+  window-minutes: 15
+
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  max-age: 3600
+
+# Groq AI Configuration (for major/speciality recommendations)
+groq:
+  api-key: ${GROQ_API_KEY:gsk_YOUR_GROQ_API_KEY_HERE}
+  base-url: https://api.groq.com/openai/v1
+  model: llama-3.3-70b-versatile
+  timeout: 30000
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.progress: DEBUG
+    org.springframework.security: INFO

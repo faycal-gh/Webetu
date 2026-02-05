@@ -1,0 +1,73 @@
+name: Deploy to Koyeb
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/progress-api
+
+jobs:
+  deploy:
+    name: Deploy to Koyeb
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Koyeb CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | bash
+          echo "$HOME/.koyeb/bin" >> $GITHUB_PATH
+
+      - name: Deploy to Koyeb
+        env:
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+        run: |
+          koyeb service update progress-api \
+            --docker ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            --docker-private-registry-secret ghcr-secret \
+            --env JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            --env CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }} \
+            --env SPRING_PROFILES_ACTIVE=prod \
+            --ports 8080:http \
+            --routes /:8080 \
+            --checks 8080:http:/actuator/health \
+            --regions fra \
+            --instance-type nano \
+            --min-scale 1 \
+            --max-scale 3
+
+      - name: Wait for deployment
+        env:
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 30
+          koyeb service describe progress-api
+
+      - name: Health check
+        run: |
+          KOYEB_URL="${{ secrets.KOYEB_APP_URL }}"
+          if [ -n "$KOYEB_URL" ]; then
+            echo "Checking health at $KOYEB_URL/actuator/health"
+            curl -f "$KOYEB_URL/actuator/health" || echo "Health check pending..."
+          else
+            echo "KOYEB_APP_URL not set, skipping health check"
+          fi
