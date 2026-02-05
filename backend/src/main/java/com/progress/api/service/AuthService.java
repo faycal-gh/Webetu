@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Slf4j
@@ -63,9 +64,19 @@ public class AuthService {
             );
         } catch (ApiException e) {
             throw e;
+        } catch (WebClientRequestException e) {
+            log.error("Cannot reach external auth service: {}", e.getMessage(), e);
+            throw new ApiException(
+                    "خدمة المصادقة غير متوفرة حاليًا. يرجى المحاولة لاحقًا.",
+                    HttpStatus.SERVICE_UNAVAILABLE
+            );
         } catch (Exception e) {
-            log.error("Authentication error", e);
-            throw new ApiException("Authentication failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("Authentication error: [{}] {}", e.getClass().getSimpleName(), e.getMessage(), e);
+            String detail = e.getMessage();
+            if (detail == null || detail.isBlank()) {
+                detail = e.getClass().getSimpleName();
+            }
+            throw new ApiException("Authentication failed: " + detail, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
