@@ -15,10 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Controller for AI-powered major/speciality recommendations.
- * Analyzes student academic performance and suggests optimal paths.
- */
 @RestController
 @RequestMapping("/api/recommendations")
 @RequiredArgsConstructor
@@ -26,51 +22,36 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "bearerAuth")
 public class RecommendationController {
 
-    private final RecommendationService recommendationService;
+        private final RecommendationService recommendationService;
 
-    @PostMapping("/suggest")
-    @Operation(
-            summary = "Get AI recommendations",
-            description = """
-                Analyzes the student's academic performance (marks, current field/major) 
-                and returns personalized recommendations for the next academic level.
-                
-                The AI considers:
-                - Current grades and performance trends
-                - Available majors/specialities based on current level
-                - Optional: Student's career preferences and preferred subjects
-                
-                Returns a list of recommendations with match scores and reasoning.
-                """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Recommendations generated successfully",
-                    content = @Content(schema = @Schema(implementation = RecommendationResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized - Invalid or missing token"
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Internal server error - AI service unavailable"
-            )
-    })
-    public ResponseEntity<RecommendationResponse> getRecommendations(
-            Authentication authentication,
-            @RequestBody(required = false) RecommendationRequest request
-    ) {
-        String uuid = (String) authentication.getPrincipal();
-        String externalToken = (String) authentication.getCredentials();
-        
-        RecommendationResponse response = recommendationService.getRecommendations(
-                uuid, 
-                externalToken, 
-                request
-        );
-        
-        return ResponseEntity.ok(response);
-    }
+        @PostMapping("/suggest")
+        @Operation(summary = "Get AI recommendations", description = """
+                        Analyzes the student's academic performance (marks, current field/major)
+                        and returns personalized recommendations for the next academic level.
+
+                        The AI considers:
+                        - Current grades and performance trends
+                        - Available majors/specialities based on current level
+                        - Optional: Student's career preferences and preferred subjects
+
+                        Returns a list of recommendations with match scores and reasoning.
+                        """)
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Recommendations generated successfully", content = @Content(schema = @Schema(implementation = RecommendationResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token"),
+                        @ApiResponse(responseCode = "500", description = "Internal server error - AI service unavailable")
+        })
+        public ResponseEntity<RecommendationResponse> getRecommendations(
+                        Authentication authentication,
+                        @RequestBody(required = false) RecommendationRequest request) {
+                String uuid = (String) authentication.getPrincipal();
+                String externalToken = (String) authentication.getCredentials();
+
+                RecommendationResponse response = recommendationService.getRecommendations(
+                                uuid,
+                                externalToken,
+                                request);
+
+                return ResponseEntity.ok(response);
+        }
 }

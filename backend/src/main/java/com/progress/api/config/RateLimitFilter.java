@@ -33,24 +33,24 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
         String clientIp = getClientIP(request);
         Bucket bucket = buckets.computeIfAbsent(clientIp, this::createNewBucket);
 
         if (bucket.tryConsume(1)) {
-            // Add rate limit headers
             response.addHeader("X-Rate-Limit-Remaining", String.valueOf(bucket.getAvailableTokens()));
             filterChain.doFilter(request, response);
         } else {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Too many requests. Please try again later.\", \"retryAfter\": " + windowMinutes + "}");
+            response.getWriter().write("{\"error\": \"Too many requests. Please try again later.\", \"retryAfter\": "
+                    + windowMinutes + "}");
         }
     }
 
     private Bucket createNewBucket(String key) {
-        Bandwidth limit = Bandwidth.classic(maxRequests, Refill.intervally(maxRequests, Duration.ofMinutes(windowMinutes)));
+        Bandwidth limit = Bandwidth.classic(maxRequests,
+                Refill.intervally(maxRequests, Duration.ofMinutes(windowMinutes)));
         return Bucket.builder().addLimit(limit).build();
     }
 
@@ -65,7 +65,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        // Don't rate limit health checks and swagger
         return path.startsWith("/actuator") || path.startsWith("/swagger") || path.startsWith("/v3/api-docs");
     }
 }

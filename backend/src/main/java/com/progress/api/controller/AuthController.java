@@ -36,10 +36,10 @@ public class AuthController {
     private final AuthService authService;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtTokenProvider jwtTokenProvider;
-    
+
     private static final String REFRESH_TOKEN_COOKIE = "refresh_token";
-    private static final int REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
-    
+    private static final int REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60;
+
     @Value("${server.servlet.context-path:}")
     private String contextPath;
 
@@ -49,16 +49,14 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request,
             HttpServletResponse response) {
         LoginResponse authResponse = authService.authenticate(request);
-        
-        // Set refresh token as httpOnly secure cookie
+
         setRefreshTokenCookie(response, authResponse.getRefreshToken());
-        
-        // Return response WITHOUT refresh token in body (it's in the cookie)
+
         return ResponseEntity.ok(LoginResponse.builder()
                 .token(authResponse.getToken())
                 .uuid(authResponse.getUuid())
                 .message(authResponse.getMessage())
-                .refreshToken(null) // Don't send in response body
+                .refreshToken(null)
                 .build());
     }
 
@@ -68,49 +66,42 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response) {
         try {
-            // Extract refresh token from httpOnly cookie
             String refreshToken = extractRefreshTokenFromCookie(request);
-            
+
             if (refreshToken == null) {
                 throw new ApiException("No refresh token provided", HttpStatus.UNAUTHORIZED);
             }
-            
-            // Validate refresh token
+
             if (!jwtTokenProvider.isTokenValid(refreshToken)) {
                 clearRefreshTokenCookie(response);
                 throw new ApiException("Invalid or expired refresh token", HttpStatus.UNAUTHORIZED);
             }
-            
-            // Check if refresh token is blacklisted
+
             if (tokenBlacklistService.isBlacklisted(refreshToken)) {
                 clearRefreshTokenCookie(response);
                 throw new ApiException("Refresh token has been revoked", HttpStatus.UNAUTHORIZED);
             }
-            
-            // Extract claims from refresh token
+
             String uuid = jwtTokenProvider.extractUuid(refreshToken);
             String externalToken = jwtTokenProvider.extractExternalToken(refreshToken);
-            
-            // Generate new tokens
+
             String newAccessToken = jwtTokenProvider.generateToken(uuid, externalToken);
             String newRefreshToken = jwtTokenProvider.generateRefreshToken(uuid, externalToken);
-            
-            // Blacklist old refresh token (rotation for security)
+
             long oldExpiration = jwtTokenProvider.extractExpiration(refreshToken);
             tokenBlacklistService.blacklistToken(refreshToken, oldExpiration);
-            
-            // Set new refresh token as httpOnly cookie
+
             setRefreshTokenCookie(response, newRefreshToken);
-            
+
             log.debug("Token refreshed successfully for uuid: {}", uuid);
-            
+
             return ResponseEntity.ok(LoginResponse.builder()
                     .token(newAccessToken)
                     .uuid(uuid)
                     .message("Token refreshed successfully")
-                    .refreshToken(null) // Don't send in response body
+                    .refreshToken(null)
                     .build());
-                    
+
         } catch (ApiException e) {
             throw e;
         } catch (Exception e) {
@@ -127,8 +118,7 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response) {
         String authHeader = request.getHeader("Authorization");
-        
-        // Blacklist access token if provided
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             try {
@@ -138,8 +128,7 @@ public class AuthController {
                 log.warn("Could not blacklist access token: {}", e.getMessage());
             }
         }
-        
-        // Blacklist refresh token from cookie if present
+
         String refreshToken = extractRefreshTokenFromCookie(request);
         if (refreshToken != null) {
             try {
@@ -149,53 +138,43 @@ public class AuthController {
                 log.warn("Could not blacklist refresh token: {}", e.getMessage());
             }
         }
-        
-        // Clear the refresh token cookie
+
         clearRefreshTokenCookie(response);
-        
+
         log.info("User logged out successfully");
-        
+
         return ResponseEntity.ok(
-            LogoutResponse.builder()
-                .message("Logged out successfully")
-                .success(true)
-                .build()
-        );
+                LogoutResponse.builder()
+                        .message("Logged out successfully")
+                        .success(true)
+                        .build());
     }
-    
-    /**
-     * Set refresh token as httpOnly, secure cookie
-     */
+
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE, refreshToken);
-        cookie.setHttpOnly(true);  // JavaScript cannot access
-        cookie.setSecure(true);     // Only sent over HTTPS
-        cookie.setPath("/api/auth"); // Only sent to auth endpoints
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/api/auth");
         cookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
-        cookie.setAttribute("SameSite", "None"); // Required for cross-origin cookies
+        cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
     }
-    
-    /**
-     * Clear the refresh token cookie
-     */
+
     private void clearRefreshTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE, "");
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/api/auth");
-        cookie.setMaxAge(0); // Delete cookie
+        cookie.setMaxAge(0);
         cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
     }
-    
-    /**
-     * Extract refresh token from httpOnly cookie
-     */
+
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
-        if (cookies == null) return null;
-        
+        if (cookies == null)
+            return null;
+
         return Arrays.stream(cookies)
                 .filter(c -> REFRESH_TOKEN_COOKIE.equals(c.getName()))
                 .map(Cookie::getValue)

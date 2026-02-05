@@ -61,10 +61,6 @@ public class JwtTokenProvider {
         return extractExpirationDate(token).before(new Date());
     }
 
-    /**
-     * Extract expiration time as milliseconds since epoch.
-     * Used for token blacklist management.
-     */
     public long extractExpiration(String token) {
         return extractExpirationDate(token).getTime();
     }

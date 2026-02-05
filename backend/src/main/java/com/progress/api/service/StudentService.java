@@ -72,13 +72,6 @@ public class StudentService {
         }
     }
 
-    /**
-     * Get CC (Continuous Assessment) grades for a student card
-     * Uses the dedicated PROGRES endpoint:
-     * /infos/controleContinue/dia/{cardId}/notesCC
-     * 
-     * @deprecated Use getCCGradesSecure instead to prevent IDOR vulnerabilities
-     */
     @Deprecated
     public Object getCCGrades(String cardId, String externalToken) {
         try {
@@ -99,15 +92,6 @@ public class StudentService {
         }
     }
 
-    /**
-     * SECURE: Get CC (Continuous Assessment) grades for a student card
-     * Validates that the cardId belongs to the authenticated user before fetching
-     * grades.
-     * This prevents IDOR (Insecure Direct Object Reference) attacks.
-     */
-    /**
-     * Helper method to validate that a cardId belongs to the authenticated user
-     */
     @SuppressWarnings("unchecked")
     private void validateCardOwnership(String uuid, String cardId, String externalToken) {
         Object studentData = getStudentData(uuid, externalToken);
@@ -136,14 +120,10 @@ public class StudentService {
         }
     }
 
-    /**
-     * SECURE: Get CC (Continuous Assessment) grades for a student card
-     */
     public Object getCCGradesSecure(String uuid, String cardId, String externalToken) {
         try {
             validateCardOwnership(uuid, cardId, externalToken);
 
-            // CardId validated - now fetch the CC grades
             return webClient.get()
                     .uri("/infos/controleContinue/dia/{cardId}/notesCC", cardId)
                     .header("Authorization", externalToken)
@@ -164,10 +144,6 @@ public class StudentService {
         }
     }
 
-    /**
-     * SECURE: Get Exam Grades for a student card
-     * Uses PROGRES endpoint: /infos/planningSession/dia/{diaId}/noteExamens
-     */
     public Object getExamGradesSecure(String uuid, String cardId, String externalToken) {
         try {
             validateCardOwnership(uuid, cardId, externalToken);
@@ -202,9 +178,6 @@ public class StudentService {
                     .block();
         } catch (WebClientResponseException e) {
             log.error("Failed to fetch student photo: {}", e.getResponseBodyAsString());
-            // It's common for photos to be missing, return null instead of error?
-            // For now, let's throw so the frontend handles it or we see the log.
-            // Actually, if it's 404, valid case for no photo.
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return null;
             }
