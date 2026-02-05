@@ -10,7 +10,6 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { YearSelector, YearData } from "@/components/YearSelector";
 
-// CC Grade from the dedicated PROGRES API endpoint
 interface CCGrade {
   id: number;
   apCode?: string;
@@ -81,20 +80,16 @@ export default function CCGradesPage() {
 
   const years: YearData[] = studentData || [];
 
-  // Set default active year when data loads
   useEffect(() => {
     if (years.length > 0 && activeYearId === null) {
-      // Default to the first year (usually the most recent one)
       setActiveYearId(years[0].id);
     }
   }, [years, activeYearId]);
 
   const currentYear = years.find(y => y.id === activeYearId) || years[0];
 
-  // Fetch CC grades when year changes
   useEffect(() => {
     const loadCCGrades = async () => {
-      // Don't load if we haven't selected a year yet or data isn't ready
       if (!currentYear?.id) {
         if (!authLoading && years.length === 0) {
           setLoading(false);
@@ -121,7 +116,6 @@ export default function CCGradesPage() {
     }
   }, [isAuthenticated, currentYear, fetchCCGrades, authLoading, years.length]);
 
-  // Loading state
   if (authLoading || (loading && !activeYearId)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-3">
@@ -131,7 +125,6 @@ export default function CCGradesPage() {
     );
   }
 
-  // No data state
   if (!studentData || years.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-4">

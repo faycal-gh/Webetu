@@ -164,9 +164,9 @@ public class RecommendationService {
                 .replaceAll("[òóôõö]", "o")
                 .replaceAll("[ùúûü]", "u")
                 .replaceAll("[ç]", "c")
-                .replaceAll("[^a-z0-9\\s]", "") // Remove special chars except spaces
+                .replaceAll("[^a-z0-9\\s]", "") 
                 .trim()
-                .replaceAll("\\s+", "_"); // Replace spaces with underscores
+                .replaceAll("\\s+", "_"); 
     }
 
     private JsonNode loadAcademicStructure(String universityName) throws IOException {

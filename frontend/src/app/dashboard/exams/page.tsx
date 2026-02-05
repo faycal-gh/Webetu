@@ -29,7 +29,6 @@ interface StudentCardData {
     anneeAcademiqueCode: string;
     llEtablissementArabe: string;
     numeroInscription: string;
-    // ... other fields
 }
 
 export default function ExamGradesPage() {
@@ -38,7 +37,6 @@ export default function ExamGradesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Get current active card
     const activeCard = Array.isArray(studentData) && studentData.length > 0
         ? (studentData[0] as StudentCardData)
         : null;
@@ -54,9 +52,9 @@ export default function ExamGradesPage() {
                 if (Array.isArray(data)) {
                     setGrades(data as ExamGrade[]);
                 } else {
-                    setGrades([]); // Handle empty or unexpected format
+                    setGrades([]);
                 }
-            } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+            } catch (err: any) {
                 console.error("Failed to load grades", err);
                 setError(err.message || "Failed to load grades");
             } finally {

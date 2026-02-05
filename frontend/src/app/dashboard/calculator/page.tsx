@@ -71,7 +71,7 @@ interface ModuleWithMark extends ModuleData {
   mcIndex: number;
 }
 
-// Loading skeleton
+
 function LoadingSkeleton() {
   return (
     <div className="min-h-screen bg-background">
@@ -102,7 +102,6 @@ function LoadingSkeleton() {
   );
 }
 
-// Module row component
 function ModuleRow({
   module,
   onMarkChange,
@@ -186,7 +185,6 @@ function ModuleRow({
   );
 }
 
-// Results summary component
 function ResultsSummary({
   moyenne,
   totalModules,
@@ -228,41 +226,7 @@ function ResultsSummary({
           </Badge>
         </div>
 
-        <Separator />
 
-        {/* Modules */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">المواد المصادق عليها</span>
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              {validatedModules} / {totalModules}
-            </Badge>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Progress bar */}
-        <div>
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-muted-foreground">نسبة النجاح</span>
-            <span className="font-medium">
-              {totalModules > 0
-                ? ((validatedModules / totalModules) * 100).toFixed(0)
-                : 0}
-              %
-            </span>
-          </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-500"
-              style={{
-                width: `${totalModules > 0 ? (validatedModules / totalModules) * 100 : 0
-                  }%`,
-              }}
-            />
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
@@ -332,7 +296,6 @@ export default function CalculatorPage() {
       try {
         for (const yearData of yearDataArray) {
           try {
-            // Fetch period structure
             const examData = await fetchExamData(yearData.id.toString());
             if (examData) {
               newExamData.set(
@@ -341,19 +304,16 @@ export default function CalculatorPage() {
               );
             }
 
-            // Fetch actual grades
             const grades = await fetchExamGrades(yearData.id.toString());
             if (Array.isArray(grades)) {
               newExamGrades.set(yearData.anneeAcademiqueCode, grades);
             }
 
-            // Fetch CC grades
             const ccGrades = await fetchCCGrades(yearData.id.toString());
             if (Array.isArray(ccGrades)) {
               newCcGrades.set(yearData.anneeAcademiqueCode, ccGrades);
             }
 
-            // Fetch Subjects (if IDs available)
             if (yearData.ouvertureOffreFormationId && yearData.niveauId) {
               const subjects = await fetchSubjects(
                 yearData.ouvertureOffreFormationId.toString(),
@@ -364,7 +324,6 @@ export default function CalculatorPage() {
               }
             }
           } catch (yearErr) {
-            // Continue with other years even if one fails
           }
         }
         setExamDataByYear(newExamData);
@@ -372,7 +331,6 @@ export default function CalculatorPage() {
         setCcGradesByYear(newCcGrades);
         setSubjectsByYear(newSubjects);
 
-        // Only set error if we got no data at all
         if (newExamData.size === 0) {
           setError("لا توجد بيانات متاحة");
         }
@@ -388,7 +346,6 @@ export default function CalculatorPage() {
     }
   }, [studentData, fetchExamData, fetchExamGrades, fetchSubjects, fetchCCGrades, authLoading, activeYear]);
 
-  // Helper function to find a grade for a module
   const findGradeForModule = (moduleName: string, grades: ExamGrade[]): string | null => {
     const normalizedName = moduleName.trim().toLowerCase();
 
@@ -412,7 +369,6 @@ export default function CalculatorPage() {
     return null;
   };
 
-  // Helper function to find coefficient from exam grades
   const findCoefficientForModule = (moduleName: string, grades: ExamGrade[]): number | null => {
     const normalizedName = moduleName.trim().toLowerCase();
 
@@ -436,7 +392,6 @@ export default function CalculatorPage() {
     return null;
   };
 
-  // Get modules for current period
   const currentModules = useMemo<ModuleWithMark[]>(() => {
     const yearExams = examDataByYear.get(activeYear) || [];
     const yearGrades = examGradesByYear.get(activeYear) || [];
@@ -446,7 +401,6 @@ export default function CalculatorPage() {
 
     const modules: ModuleWithMark[] = [];
 
-    // 1. Process existing modules from ExamData (Bilan)
     const processedModuleNames = new Set<string>();
 
     if (period) {
@@ -462,10 +416,6 @@ export default function CalculatorPage() {
             (s.mcLibelleAr && s.mcLibelleAr.trim() === normalizedName)
           );
 
-          // Determine coefficient:
-          // 1. Use bilan's coefficient if it's > 0
-          // 2. Fall back to exam grades' rattachementMcCoefficient
-          // 3. Fall back to 0 (user can input manually)
           let realCoeff = mc.coefficient;
           if (realCoeff === 0 || realCoeff === undefined) {
             const examCoeff = findCoefficientForModule(mc.mcLibelleFr, yearGrades);
@@ -476,20 +426,13 @@ export default function CalculatorPage() {
 
           let defaultMark = "0";
 
-          // Priority 1: User entered mark
           if (marks.has(id)) {
             defaultMark = marks.get(id)!;
-          }
-          // Priority 2: Exam mark from detailed grades
-          else {
+          } else {
             const matchedGrade = findGradeForModule(mc.mcLibelleFr, yearGrades);
             if (matchedGrade) {
               defaultMark = matchedGrade;
-            }
-            // Priority 3: CC Mark if it acts as a module?
-            // If module has NO exam mark but has CC mark and is a module?
-            // For now keep existing logic + official average
-            else if (mc.moyenneGenerale !== undefined && mc.moyenneGenerale !== null) {
+            } else if (mc.moyenneGenerale !== undefined && mc.moyenneGenerale !== null) {
               defaultMark = mc.moyenneGenerale.toString();
             }
           }
@@ -507,26 +450,22 @@ export default function CalculatorPage() {
       });
     }
 
-    // 2. Scan CC Grades for "Hidden" Modules (e.g. TP Automatisme) that are not in ExamData but have a matching Subject entry
     yearCcGrades.forEach((cc, index) => {
       if (!cc.apLibelleFr) return;
 
       const normalizedName = cc.apLibelleFr.trim().toLowerCase();
-      if (processedModuleNames.has(normalizedName)) return; // Already processed
+      if (processedModuleNames.has(normalizedName)) return;
 
-      // Check if it's a module in Subjects (to get assessment weights)
       const subject = yearSubjects.find(s =>
         s.mcLibelleFr && s.mcLibelleFr.trim().toLowerCase() === normalizedName
       );
 
-      // If it exists in Subjects, include it
       if (subject) {
         const id = `cc-module-${activeYear}-${index}`;
 
-        // Try to get coefficient from exam grades
         let coeff = findCoefficientForModule(cc.apLibelleFr, yearGrades);
         if (coeff === null) {
-          coeff = 1; // Default if not found
+          coeff = 1;
         }
 
         let defaultMark = "0";
@@ -554,7 +493,6 @@ export default function CalculatorPage() {
     return modules;
   }, [examDataByYear, examGradesByYear, subjectsByYear, ccGradesByYear, activeYear, activePeriod, marks, customCoefficients]);
 
-  // Calculate results
   const results = useMemo(() => {
     let sumWeighted = 0;
     let sumCoeff = 0;
@@ -562,7 +500,6 @@ export default function CalculatorPage() {
 
     currentModules.forEach((module) => {
       const mark = parseFloat(module.mark);
-      // Use custom coefficient if original is 0, otherwise use original
       const effectiveCoeff =
         module.coefficient === 0
           ? parseFloat(module.customCoefficient) || 0
