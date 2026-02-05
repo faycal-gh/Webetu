@@ -18,8 +18,8 @@ export default function LoginPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
-  
-  // Refs to capture autofill/paste values that may not trigger onChange
+
+
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
@@ -27,8 +27,7 @@ export default function LoginPage() {
     e.preventDefault();
 
 
-    // Get values from both React state AND DOM refs to handle autofill/paste
-    // Browser autofill sometimes doesn't trigger onChange, so we check DOM directly
+
     const actualUsername = username.trim() || usernameRef.current?.value?.trim() || "";
     const actualPassword = password.trim() || passwordRef.current?.value?.trim() || "";
 
@@ -53,7 +52,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-muted/50 to-background relative overflow-hidden">
-      {/* Decorative background elements */}
+
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[100px]" />
         <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[100px]" />
@@ -128,10 +127,10 @@ export default function LoginPage() {
 
 
 
-            <Button 
-              type="submit" 
-              className="w-full h-11 text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02]" 
-              size="lg" 
+            <Button
+              type="submit"
+              className="w-full h-11 text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02]"
+              size="lg"
               disabled={isLoading}
             >
               {isLoading ? (

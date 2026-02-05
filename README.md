@@ -1,6 +1,6 @@
 # Progress - Algerian Student Progress Tracker
 
-[![Contribution Guidelines](https://img.shields.io/badge/Contributor%20Guide-READ-blue?style=for-the-badge&logo=github)](CONTRIBUTING.md)
+[![Contribution Guidelines](https://img.shields.io/badge/Contributor%20Guide-READ-blue?style=for-the-badge&logo=github)](docs/CONTRIBUTING.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./backend/LICENSE)
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.org/projects/jdk/17/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)

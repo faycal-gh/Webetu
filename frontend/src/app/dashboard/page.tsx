@@ -67,7 +67,7 @@ export default function DashboardPage() {
     );
   }
 
-  // Get student name from the first item in studentData array if available
+
   const studentName =
     Array.isArray(studentData) && studentData[0]?.individuNomLatin
       ? studentData[0].individuNomLatin
@@ -75,7 +75,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 pb-24">
-      {/* Welcome Banner */}
+
       <Card className="mb-6 bg-gradient-to-l from-primary to-primary/90 text-primary-foreground border-0 shadow-lg overflow-hidden">
         <CardContent className="p-5">
           <div className="flex items-center justify-between gap-4">
@@ -100,7 +100,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Dashboard Tiles Grid */}
+
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {dashboardTiles.map((tile, index) => (
           <DashboardTile

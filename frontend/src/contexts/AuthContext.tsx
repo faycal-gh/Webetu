@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-// API base URL - points to Spring Boot backend
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
@@ -36,9 +36,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/**
- * Decode JWT payload to get expiration and other claims
- */
+
 function decodeJwtPayload(token: string): { exp?: number;[key: string]: unknown } | null {
   try {
     const parts = token.split(".");
@@ -49,19 +47,15 @@ function decodeJwtPayload(token: string): { exp?: number;[key: string]: unknown 
   }
 }
 
-/**
- * Check if a JWT token is expired
- */
+
 function isTokenExpired(token: string): boolean {
   const payload = decodeJwtPayload(token);
   if (!payload?.exp) return true;
-  // Add 30 second buffer
+
   return Date.now() >= (payload.exp * 1000) - 30000;
 }
 
-/**
- * Get time until token expires in milliseconds
- */
+
 function getTokenExpiresIn(token: string): number {
   const payload = decodeJwtPayload(token);
   if (!payload?.exp) return 0;
@@ -76,20 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [studentData, setStudentData] = useState<StudentData>(null);
   const router = useRouter();
 
-  // Ref to track refresh timer
+
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
-  // Ref to prevent multiple simultaneous refresh attempts
+
   const isRefreshingRef = useRef(false);
 
-  /**
-   * Force logout when refresh fails - clears local state only
-   * (refresh token cookie is httpOnly, cleared by server)
-   */
+
   const handleForceLogout = useCallback(() => {
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
     }
-    // Only clear what we can access (not the httpOnly cookie)
+
     localStorage.removeItem("token");
     localStorage.removeItem("uuid");
     localStorage.removeItem("studentData");
@@ -100,10 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/login");
   }, [router]);
 
-  /**
-   * Refresh the access token using httpOnly cookie (sent automatically)
-   * No need to send refresh token in body - it's in the cookie!
-   */
+
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
     if (isRefreshingRef.current) {
       return null;
@@ -137,16 +125,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  /**
-   * Schedule the next token refresh - refreshes 2 minutes before expiration
-   */
+
   const scheduleTokenRefresh = useCallback((accessToken: string) => {
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
     }
 
     const expiresIn = getTokenExpiresIn(accessToken);
-    // Refresh 2 minutes before expiration, minimum 10 seconds
+
     const refreshIn = Math.max(expiresIn - 120000, 10000);
 
     refreshTimerRef.current = setTimeout(async () => {
@@ -159,9 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, refreshIn);
   }, [refreshAccessToken, handleForceLogout]);
 
-  /**
-   * Make an authenticated API request with automatic token refresh on 401
-   */
+
   const authenticatedFetch = useCallback(async (
     url: string,
     options: RequestInit = {}
@@ -212,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response;
   }, [token, refreshAccessToken, scheduleTokenRefresh, handleForceLogout]);
 
-  // Check for existing session on mount
+
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem("token");
@@ -258,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [scheduleTokenRefresh, refreshAccessToken]);
 
-  // Login function - uses Spring Boot backend
+
   const login = async (username: string, password: string) => {
     try {
       const authResponse = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -318,7 +302,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Fetch exam data for a specific academic period with auto-refresh
+
   const fetchExamData = async (id: string) => {
     if (!token && !localStorage.getItem("token")) {
       throw new Error("Not authenticated");
@@ -351,7 +335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Fetch student personal info with auto-refresh
+
   const fetchStudentInfo = async () => {
     if (!token && !localStorage.getItem("token")) {
       throw new Error("Not authenticated");
@@ -372,7 +356,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return await response.json();
   };
 
-  // Fetch CC grades (continuous assessment/TP) for a specific student card
+
   const fetchCCGrades = async (cardId: string) => {
     if (!token && !localStorage.getItem("token")) {
       throw new Error("Not authenticated");
@@ -405,7 +389,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Fetch Exam grades
+
   const fetchExamGrades = async (cardId: string) => {
     if (!token && !localStorage.getItem("token")) {
       throw new Error("Not authenticated");
@@ -438,7 +422,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Fetch student photo
+
   const fetchStudentPhoto = async (): Promise<string | null> => {
     if (!token && !localStorage.getItem("token")) {
       throw new Error("Not authenticated");
@@ -464,7 +448,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return text || null;
   };
 
-  // Fetch subjects and coefficients
+
   const fetchSubjects = async (offerId: string, levelId: string) => {
     if (!token && !localStorage.getItem("token")) {
       throw new Error("Not authenticated");
@@ -499,7 +483,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Logout function - invalidates tokens and clears session
+
   const logout = async () => {
     // Clear refresh timer
     if (refreshTimerRef.current) {

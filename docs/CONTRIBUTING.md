@@ -42,7 +42,7 @@ Refer to the main `README.md` for detailed architectural diagrams.
 
 ###  Specialties & Universities
 
-The recommendation engine relies on community-contributed data. To add or update universities and specialties, please refer to the [Specialties Contribution Guide](docs/CONTRIBUTING_SPECIALTIES.md).
+The recommendation engine relies on community-contributed data. To add or update universities and specialties, please refer to the [Specialties Contribution Guide](CONTRIBUTING_SPECIALTIES.md).
 
 ---
 
